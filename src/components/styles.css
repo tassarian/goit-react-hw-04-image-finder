@@ -1,0 +1,84 @@
+
+
+/*
+ * Стили компонента App
+ */
+
+
+/*
+ * Стили компонента Searchbar
+ */
+
+
+/*
+ * Стили компонента SearchForm
+ */
+.SearchForm {
+  
+}
+
+.SearchForm-button {
+ 
+}
+
+.SearchForm-button:hover {
+ 
+}
+
+.SearchForm-button-label {
+  
+}
+
+.SearchForm-input {
+  
+}
+
+.SearchForm-input::placeholder {
+  
+}
+
+/*
+ * Стили компонента ImageGallery
+ */
+.ImageGallery {
+  
+}
+
+/*
+ * Стили компонента ImageGalleryItem
+ */
+.ImageGalleryItem {
+  
+}
+
+.ImageGalleryItem-image {
+  
+}
+
+.ImageGalleryItem-image:hover {
+  
+}
+
+/*
+ * Стили компонента Modal
+ */
+
+.Overlay {
+  
+}
+
+.Modal {
+  
+}
+
+/*
+* Стили компонента Buton (Load more)
+*/
+.Button {
+
+}
+
+.Button:hover,
+.Button:focus {
+  
+}
