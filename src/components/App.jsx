@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Notify } from 'notiflix';
 
 import { StyledApp } from './Global.styled';
@@ -9,6 +9,7 @@ import { Button } from './Button/Button';
 import MyLoader from './Loader/Loader';
 import { Modal } from './Modal/Modal';
 import { getImg } from '../../src/services/PixabayApi';
+import { useToggle } from './hooks/useToggle';
 
 const STATUS = {
 	idle: 'loading',
@@ -16,85 +17,74 @@ const STATUS = {
 	fulfilled: 'fulfilled',
 	rejected: 'rejected',
 };
-class App extends React.Component {
-	state = {
-		images: [],
-		searchQuery: '',
-		page: 1,
-		pictureUrl: '',
-		status: 'idle',
-		hits: null,
-		isOpen: false,
-	};
+export const App = () => {
+	const [images, setImages] = useState([]);
+	const [searchQuery, setSearchQuery] = useState('');
+	const [page, setPage] = useState(1);
+	const [pictureUrl, setPictureUrl] = useState('');
+	const [status, setStatus] = useState('idle');
+	const [hits, setHits] = useState(null);
 
-	componentDidUpdate = (_, prevState) => {
-		if (
-			prevState.searchQuery !== this.state.searchQuery ||
-			prevState.page !== this.state.page
-		)
-			this.fetchImages();
-	};
-
-	fetchImages = () => {
-		const { searchQuery, page } = this.state;
+	const fetchImages = useCallback(() => {
 		const { pending, fulfilled, rejected } = STATUS;
+		setStatus(pending);
+		getImg(searchQuery, page)
+			.then(results => {
+				setStatus(fulfilled);
+				setImages(prev => [...prev, ...results.data.hits]);
+				setHits(results.data.totalHits);
+				Notify.success(`We found ${results.data.totalHits} images!`);
+			})
+			.catch(e => {
+				setStatus(rejected);
+				Notify.failure('Something went wrong!');
+			});
+	}, [searchQuery, page]);
 
-		this.setState({ status: pending });
-			getImg(searchQuery, page)
-				.then(results => {
-					this.setState(prevState => ({
-						images: [...prevState.images, ...results.data.hits],
-						status: fulfilled,
-						hits: results.data.totalHits,
-					}));
-					// Notify.success(`We found ${results.data.totalHits} images!`);
-				})
-				.catch(e => {
-					this.setState({ status: rejected });
-					Notify.failure('Something went wrong!');
-				});
+	useEffect(() => {
+		if (!searchQuery) {
+			return;
+		} else {
+			fetchImages();
+		}
+	}, [searchQuery, fetchImages]);
+
+	const moreImages = () => {
+		setPage(prev => prev + 1);
 	};
 
-	moreImages = () => {
-		this.setState(prevState => ({ page: prevState.page + 1 }));
+	const handleChangeQuery = query => {
+		setImages([]);
+		setSearchQuery(query);
+		setPage(1);
 	};
 
-	handleChangeQuery = searchQuery => {
-		this.setState({ images: [], searchQuery, page: 1 });
+	const getCurrentPicture = largeImg => {
+		setPictureUrl(largeImg);
+		open()
 	};
+	
+	const { open, isOpen, close} = useToggle()
+	const { pending, fulfilled, rejected } = STATUS;
+	return (
+		<StyledApp>
+			<Searchbar onChangeQuery={handleChangeQuery} />
+			{status === pending && <MyLoader />}
+			{status === fulfilled && (
+				<ImageGallery
+					images={images}
+					getCurrentPicture={getCurrentPicture}
+				/>
+			)}
+			{status === rejected && (
+				<h1>We did not found imageі for you request</h1>
+			)}
 
-	getCurrentPicture = pictureUrl => {
-		this.setState({ pictureUrl });
-		this.toggleModal();
-	};
-	toggleModal = () => {
-		this.setState(prevState => ({ isOpen: !prevState.isOpen }));
-	};
+			{hits > 12 && status === fulfilled && hits !== images.length && (
+				<Button onClick={moreImages} />
+			)}
 
-	render() {
-		const { images, status, isOpen, pictureUrl, hits } = this.state;
-		const { pending, fulfilled, rejected } = STATUS;
-		return (
-			<StyledApp>
-				<Searchbar onChangeQuery={this.handleChangeQuery} />
-				{status === pending && <MyLoader />}
-				{status === fulfilled && (
-					<ImageGallery
-						images={this.state.images}
-						getCurrentPicture={this.getCurrentPicture}
-					/>
-				)}
-				{status === rejected && (
-					<h1>We did not found imageі for you request</h1>
-				)}
-
-				{hits > 12 && status === fulfilled && hits !== images.length && <Button onClick={this.moreImages} />}
-
-				{isOpen && (
-					<Modal onClose={this.toggleModal} largeImg={pictureUrl} />
-				)}
-			</StyledApp>
-		);
-	}
-}
-export default App;
+			{isOpen && <Modal onClose={close} largeImg={pictureUrl} />}
+		</StyledApp>
+	);
+};

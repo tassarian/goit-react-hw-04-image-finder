@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
 	StyledSearchForm,
 	StyledSearchFormBtn,
@@ -9,12 +9,12 @@ import {
 import PropTypes from 'prop-types';
 
 export const Searchbar = ({ onChangeQuery }) => {
+	const [search, setSearch] = useState('')
 	const onSubmit = e => {
 		e.preventDefault()
-		const form = e.target
-		onChangeQuery(form.searchImg.value)
-		
+		onChangeQuery(search)
 	}
+	const handleOnChange = e => setSearch(e.target.value)
 	return (
 		<StyledSearchbar>
 			<StyledSearchForm onSubmit={onSubmit}>
@@ -22,6 +22,8 @@ export const Searchbar = ({ onChangeQuery }) => {
 					<span>Search</span>
 				</StyledSearchFormBtn>
 				<StyledSearchFormInput
+					onChange={handleOnChange}
+					value={search}
 					type="text"
 					autocomplete="off"
 					name='searchImg'
