@@ -1,39 +1,30 @@
-import { Component } from 'react';
+import { useEffect } from 'react';
 import { Backdrop, ModalImg, StyledModal } from './Modal.styled';
 import { PropTypes } from 'prop-types';
 
-export class Modal extends Component {
-	componentDidMount() {
-		window.addEventListener('keydown', this.handleKeyDown);
-	}
-	componentWillUnmount() {
-		window.removeEventListener('keydown', this.handleKeyDown);
-	}
+export const Modal = ({ data, close }) => {
+	useEffect(() => {
+		const handleKeyDown = e => {
+			if (e.key === 'Escape') {
+				close();
+			}
+		};
+		window.addEventListener('keydown', handleKeyDown);
+		return () => {
+			window.removeEventListener('keydown', handleKeyDown);
+		};
+	}, [close]);
 
-	onBackdropClick = e => {
-		if (e.currentTarget === e.target) {
-			this.props.action('', '');
-		}
-	};
-	handleKeyDown = e => {
-		if (e.key === 'Escape') {
-			this.props.action('', '');
-		}
-	};
-	render() {
-		const { img, tags } = this.props;
-		return (
-			<Backdrop onClick={this.onBackdropClick}>
-				<StyledModal>
-					<ModalImg src={img} alt={tags} />
-				</StyledModal>
-			</Backdrop>
-		);
-	}
-}
+	return (
+		<Backdrop onClick={close}>
+			<StyledModal>
+				<ModalImg src={data.img} alt={data.tags} />
+			</StyledModal>
+		</Backdrop>
+	);
+};
 
 Modal.propTypes = {
-	action: PropTypes.func.isRequired,
-	img: PropTypes.string.isRequired,
-	tags: PropTypes.string.isRequired,
+	data: PropTypes.object.isRequired,
+	close: PropTypes.func.isRequired,
 };

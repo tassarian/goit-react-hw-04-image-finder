@@ -5,138 +5,111 @@ import { Searchbar } from './Searchbar/Searchbar';
 import { Blocks } from 'react-loader-spinner';
 import { Button } from './Button/Button';
 import { Modal } from './Modal/Modal';
+import { useEffect, useRef, useState } from 'react';
 
-const { Component } = require('react');
+const App = () => {
+	const [isOpen, setIsOpen] = useState(false);
+	const imgPerPage = 12;
+	const [images, setImages] = useState([]);
+	const [query, setQuery] = useState('');
+	const [page, setPage] = useState(1);
+	const [isLoading, setIsLoading] = useState(false);
+	const [totalPages, setTotalPages] = useState(null);
+	const [modalData, setModalData] = useState({
+		img: '',
+		tags: '',
+	});
+	const isFirstLoad = useRef(true);
 
-class App extends Component {
-	state = {
-		images: [],
-		query: '',
-		page: 1,
-		imgPerPage: 12,
-		isOpen: false,
-		isLoading: false,
-		totalPages: null,
-		modal: {
-			largeImg: '',
-			tags: '',
-		},
-	};
-
-	async componentDidMount() {
-		try {
-			this.setState({
-				isLoading: true,
-			});
-			const result = await handleFetch(
-				'',
-				this.state.page,
-				this.state.imgPerPage
-			);
-
-			this.setState({
-				images: [...result.hits],
-
-				isLoading: false,
-			});
-		} catch (error) {
-			console.log(error);
+	useEffect(() => {
+		if (isFirstLoad.current) {
+			return;
 		}
-	}
-
-	async componentDidUpdate(_, prevState) {
-		if (
-			prevState.query !== this.state.query ||
-			prevState.page !== this.state.page
-		) {
-			try {
-				this.setState({
-					isLoading: true,
-				});
-				const result = await handleFetch(
-					this.state.query,
-					this.state.page,
-					this.state.imgPerPage
-				);
-				if (prevState.query !== this.state.query) {
-					this.setState({
-						images: [...result.hits],
-						totalPages: Math.ceil(
-							result.totalHits / this.state.imgPerPage
-						),
-						isLoading: false,
-					});
+		setIsLoading(true);
+		handleFetch('', page, imgPerPage)
+			.then(result => {
+				setTotalPages(result.totalHits / imgPerPage);
+				if (page > 1) {
+					setImages(prevState => [...prevState, ...result.hits]);
 				} else {
-					this.setState(prevState => ({
-						images: [...prevState.images, ...result.hits],
-						isLoading: false,
-					}));
+					setImages(result.hits);
 				}
-			} catch (error) {
-				console.log(error.message);
-			}
+			})
+			.catch(err => {
+				console.log(err);
+			})
+			.finally(() => {
+				setIsLoading(false);
+			});
+	}, [page, imgPerPage]);
+
+	useEffect(() => {
+		setIsLoading(true);
+		handleFetch(query, page, imgPerPage)
+			.then(result => {
+				setTotalPages(result.totalHits / imgPerPage);
+				if (page > 1) {
+					setImages(prevState => [...prevState, ...result.hits]);
+				} else {
+					setImages(result.hits);
+				}
+			})
+			.catch(err => {
+				console.log(err);
+			})
+			.finally(() => {
+				setIsLoading(false);
+			});
+	}, [page, query]);
+
+	const handleSubmit = query => {
+		setQuery(query);
+		setPage(1);
+	};
+
+	const handleAddPage = () => {
+		if (page < totalPages) {
+			setPage(prevState => prevState + 1);
 		}
-	}
-
-	handleSubmit = query => {
-		this.setState({ query, page: 1 });
 	};
 
-	handleAddPage = () => {
-		if (this.state.page < this.state.totalPages) {
-			this.setState(prevState => ({ page: prevState.page + 1 }));
-		}
+	const toggleModal = (img, tags) => {
+		setModalData({
+			img,
+			tags,
+		});
+		setIsOpen(true);
+	};
+	const closeModal = () => {
+		setIsOpen(false);
 	};
 
-	toggleModal = (img, tags) => {
-		this.setState(prevState => ({
-			isOpen: !prevState.isOpen,
-			modal: {
-				largeImg: img,
-				tags,
-			},
-		}));
-	};
+	return (
+		<>
+			<Container>
+				<Searchbar action={handleSubmit} />
 
-	render() {
-		return (
-			<>
-				<Container>
-					<Searchbar action={this.handleSubmit} />
-
-					{this.state.isLoading ? (
-						<Section h="max-content" w="max-content" m="250px auto">
-							<Blocks
-								visible={true}
-								height="80"
-								width="80"
-								ariaLabel="blocks-loading"
-								wrapperStyle={{}}
-								wrapperClass="blocks-wrapper"
-							/>
-						</Section>
-					) : (
-						<Section>
-							<ImageGallery
-								action={this.toggleModal}
-								images={this.state.images}
-							/>
-							{this.state.totalPages > this.state.page && (
-								<Button action={this.handleAddPage} />
-							)}
-						</Section>
-					)}
-				</Container>
-				{this.state.isOpen && (
-					<Modal
-						action={this.toggleModal}
-						tags={this.state.modal.tags}
-						img={this.state.modal.largeImg}
-					/>
+				{isLoading ? (
+					<Section h="max-content" w="max-content" m="250px auto">
+						<Blocks
+							visible={true}
+							height="80"
+							width="80"
+							ariaLabel="blocks-loading"
+							wrapperStyle={{}}
+							wrapperClass="blocks-wrapper"
+						/>
+					</Section>
+				) : (
+					<Section>
+						<ImageGallery action={toggleModal} images={images} />
+						{totalPages > page && <Button action={handleAddPage} />}
+					</Section>
 				)}
-			</>
-		);
-	}
-}
+			</Container>
+			{isOpen && <Modal close={closeModal} data={modalData} />}
+		</>
+	);
+};
 
 export default App;
