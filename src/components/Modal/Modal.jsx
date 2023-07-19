@@ -15,8 +15,14 @@ export const Modal = ({ data, close }) => {
 		};
 	}, [close]);
 
+	const closeOnClick = e => {
+		if (e.target === e.currentTarget) {
+			close();
+		}
+	};
+
 	return (
-		<Backdrop onClick={close}>
+		<Backdrop onClick={closeOnClick}>
 			<StyledModal>
 				<ModalImg src={data.img} alt={data.tags} />
 			</StyledModal>

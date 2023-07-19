@@ -67,12 +67,6 @@ const App = () => {
 		setPage(1);
 	};
 
-	const handleAddPage = () => {
-		if (page < totalPages) {
-			setPage(prevState => prevState + 1);
-		}
-	};
-
 	const toggleModal = (img, tags) => {
 		setModalData({
 			img,
@@ -103,7 +97,13 @@ const App = () => {
 				) : (
 					<Section>
 						<ImageGallery action={toggleModal} images={images} />
-						{totalPages > page && <Button action={handleAddPage} />}
+						{totalPages > page && (
+							<Button
+								action={() => {
+									setPage(prevState => prevState + 1);
+								}}
+							/>
+						)}
 					</Section>
 				)}
 			</Container>

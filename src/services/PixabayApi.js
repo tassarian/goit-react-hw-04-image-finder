@@ -1,10 +1,11 @@
 import axios from 'axios';
 
-export function handleFetch(request, page, imgPerPage) {
-	const API_KEY = '35960135-b5affa7a28418b398b23cde19';
-	const BASE_URL = 'https://pixabay.com/api/';
-	return axios
-		.get(`${BASE_URL}`, {
+const API_KEY = '35960135-b5affa7a28418b398b23cde19';
+const BASE_URL = 'https://pixabay.com/api/';
+
+export async function handleFetch(request, page, imgPerPage) {
+	try {
+		const response = await axios.get(`${BASE_URL}`, {
 			params: {
 				q: request,
 				page: page,
@@ -13,7 +14,9 @@ export function handleFetch(request, page, imgPerPage) {
 				orientation: 'horizontal',
 				per_page: imgPerPage,
 			},
-		})
-		.then(response => response.data)
-		.catch(err => console.log(err));
+		});
+		return response.data;
+	} catch (err) {
+		return console.log(err);
+	}
 }
